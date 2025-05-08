@@ -4,16 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Votre Panier – JO 2024</title>
-  <link rel="stylesheet" href="panier.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='panier.css') }}" />
 </head>
 <body>
 
   <header>
     <h1>🛒 Votre Panier – JO Paris 2024</h1>
     <nav>
-      <a href="index.html">Accueil</a>
-      <a href="panier.html">Panier</a>
-      <a href="connexion.html">Connexion</a>
+      <a href="{{ url_for('index') }}">Accueil</a>
+      <a href="{{ url_for('panier') }}">Panier</a>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}">Déconnexion</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Connexion</a>
+      {% endif %}
     </nav>
   </header>
 
@@ -28,13 +32,24 @@
     </section>
 
     <section class="offers" id="cart-items">
-      <!-- Les éléments du panier seront ajoutés ici dynamiquement -->
+      {% if items %}
+        <ul>
+          {% for item in items %}
+            <li>{{ item.title }} – {{ item.price }} €</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Votre panier est vide.</p>
+      {% endif %}
     </section>
 
     <section class="hero">
-      <h3 id="total">Total Panier : 0 €</h3>
+      <h3 id="total">Total Panier : {{ total }} €</h3>
       <button id="clear-cart" class="cta-button">Vider le panier</button>
-      <a href="#" class="cta-button">Procéder au paiement</a>
+      <form action="{{ url_for('create_checkout_session') }}" method="post">
+  <button type="submit" class="cta-button">Procéder au paiement</button>
+</form>
+
     </section>
   </main>
 
@@ -42,7 +57,6 @@
     <p>&copy; 2024 Paris 2024 - Tous droits réservés</p>
   </footer>
 
-  <script src="panier.js"></script>
+  <script src="{{ url_for('static', filename='panier.js') }}"></script>
 </body>
 </html>
-
