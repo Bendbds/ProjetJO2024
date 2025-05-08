@@ -1,14 +1,14 @@
+import os
+import uuid
+import stripe
+import bcrypt
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, login_user, logout_user, login_required,
     current_user, UserMixin
 )
-from werkzeug.security import generate_password_hash, check_password_hash
-import stripe
-import uuid
 from dotenv import load_dotenv
-import os
 
 # Charger les variables d'environnement
 load_dotenv()
@@ -37,7 +37,7 @@ YOUR_DOMAIN = 'http://localhost:5000'
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
+    password = db.Column(db.LargeBinary(60), nullable=False)
 
 class CartItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -86,7 +86,7 @@ def register():
             flash("Les mots de passe ne correspondent pas.")
             return redirect(url_for('register'))
 
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         new_user = User(email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
@@ -102,7 +102,7 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(email=email).first()
 
-        if user and check_password_hash(user.password, password):
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password):
             login_user(user)
             flash("Connexion réussie.")
             return redirect(url_for('index'))
@@ -147,7 +147,7 @@ def add_to_cart():
         return '', 200
     except Exception as e:
         print(f"Error adding to cart: {e}")
-        return jsonify({'error': 'Erreur ajout panier'}), 500
+        return jsonify({'error': 'Vous devez être connecté pour ajouter un article panier'}), 500
 
 @app.route('/cart')
 def cart():
