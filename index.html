@@ -8,72 +8,68 @@
 </head>
 <body>
 
-  <header>
-    <h1>🛒 Bienvenue sur le site des JO Paris 2024</h1>
-    <nav>
-      <a href="{{ url_for('index') }}">Accueil</a>
-      <a href="{{ url_for('panier') }}">Panier</a>
-      {% if current_user.is_authenticated %}
-        <span>Connecté</span>
-        <a href="{{ url_for('logout') }}">Déconnexion</a>
-      {% else %}
-        <a href="{{ url_for('login') }}">Connexion</a> <!-- Utiliser 'login' ici -->
+<header>
+  <h1>🛒 Bienvenue sur le site des JO Paris 2024</h1>
+  <nav>
+    <a href="{{ url_for('index') }}">Accueil</a>
+    <a href="{{ url_for('panier') }}">Panier</a>
+    {% if current_user.is_authenticated %}
+      <span>Connecté</span>
+      {% if current_user.is_admin %}
+        <a href="{{ url_for('admin_dashboard') }}">Administration</a>
       {% endif %}
-    </nav>
-  </header>
+      <a href="{{ url_for('logout') }}">Déconnexion</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Connexion</a>
+    {% endif %}
+  </nav>
+</header>
 
-  <a href="#">
-    <img src="https://media.istockphoto.com/id/171265348/fr/photo/trois-m%C3%A9dailles-olympiques-drapeau.jpg?s=2048x2048&w=is&k=20&c=uiU5Knn_CxT9D44K8o2tZjZ-jzGKaZvfxoAMft7P6AE=" alt="Anneaux Olympiques" class="hero-image">
-  </a>
+<a href="#">
+  <img src="https://media.istockphoto.com/id/171265348/fr/photo/trois-m%C3%A9dailles-olympiques-drapeau.jpg?s=2048x2048&w=is&k=20&c=uiU5Knn_CxT9D44K8o2tZjZ-jzGKaZvfxoAMft7P6AE=" alt="Anneaux Olympiques" class="hero-image">
+</a>
 
-  <main>
+<main>
+  <section class="hero">
+    <h2>Réservez vos billets pour les Jeux Olympiques !</h2>
+    <p>Profitez d'offres solo, duo ou familiale pour vivre les JO comme jamais.</p>
+  </section>
 
-    <section class="hero">
-      <h2>Réservez vos billets pour les Jeux Olympiques !</h2>
-      <p>Profitez d'offres solo, duo ou familiale pour vivre les JO comme jamais.</p>
-    </section>
+ <section class="events">
+  <h2>Événements existants</h2>
+  {% for event in events %}
+    <div class="card">
+      <h4>{{ event.name }}</h4>
+      <p>{{ event.location }}
+        {% if event.end_date %}
+          {{ event.date | format_datetime('d MMMM yyyy') }} – {{ event.end_date | format_datetime('d MMMM yyyy') }}
+        {% else %}
+          {{ event.date | format_datetime('d MMMM yyyy') }}
+        {% endif %}
+      </p>
+      <p>À partir de {{ event.price }} €</p>
+      <p>Places restantes : {{ event.stock }}</p>
+      {% if event.stock > 0 %}
+        <button class="add-to-cart"
+                data-title="{{ event.name }}"
+                data-price="{{ event.price }}"
+                data-event-id="{{ event.id }}">
+          Ajouter au panier
+        </button>
+      {% else %}
+        <button class="add-to-cart" disabled>
+          Épuisé
+        </button>
+      {% endif %}
+    </div>
+  {% endfor %}
+</section>
 
-    <section class="offers">
-      <div class="card">
-        <h4>Offre Solo journée</h4>
-        <p>1 billet – 100 €</p>
-        <button class="add-to-cart" data-title="Offre Solo" data-price="100">Ajouter au panier</button>
-      </div>
-      <div class="card">
-        <h4>Offre Duo journée</h4>
-        <p>2 billets – 180 €</p>
-        <button class="add-to-cart" data-title="Offre Duo" data-price="180">Ajouter au panier</button>
-      </div>
-      <div class="card">
-        <h4>Offre Famille journée</h4>
-        <p>4 billets – 320 €</p>
-        <button class="add-to-cart" data-title="Offre Famille" data-price="320">Ajouter au panier</button>
-      </div>
-    </section>
+</main>
 
-    <section class="events">
-      <h2>Épreuves à venir</h2>
-      <div class="card">
-        <h4>100m Hommes</h4>
-        <p>Stade de France – 5 août 2024</p>
-        <p>À partir de 50 €</p>
-      </div>
-      <div class="card">
-        <h4>Finale Natation 200m</h4>
-        <p>Centre aquatique – 28 juillet 2024</p>
-        <p>À partir de 35 €</p>
-      </div>
-      <div class="card">
-        <h4>Gymnastique artistique</h4>
-        <p>Accor Arena – 3 août 2024</p>
-        <p>À partir de 40 €</p>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <p>&copy; 2024 Paris 2024 - Tous droits réservés</p>
-  </footer>
-  <script src="{{ url_for('static', filename='panier.js') }}"></script>
+<footer>
+  <p>&copy; 2024 Paris 2024 - Tous droits réservés</p>
+</footer>
+<script src="{{ url_for('static', filename='panier.js') }}"></script>
 </body>
 </html>

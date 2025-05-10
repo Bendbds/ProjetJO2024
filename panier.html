@@ -8,18 +8,22 @@
 </head>
 <body>
 
-  <header>
-    <h1>🛒 Votre Panier – JO Paris 2024</h1>
-    <nav>
-      <a href="{{ url_for('index') }}">Accueil</a>
-      <a href="{{ url_for('panier') }}">Panier</a>
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('logout') }}">Déconnexion</a>
-      {% else %}
-        <a href="{{ url_for('login') }}">Connexion</a>
+ <header>
+  <h1>🛒 Bienvenue sur le site des JO Paris 2024</h1>
+  <nav>
+    <a href="{{ url_for('index') }}">Accueil</a>
+    <a href="{{ url_for('panier') }}">Panier</a>
+    {% if current_user.is_authenticated %}
+      <span>Connecté</span>
+      {% if current_user.is_admin %}
+        <a href="{{ url_for('admin_dashboard') }}">Administration</a> <!-- Lien vers la page admin -->
       {% endif %}
-    </nav>
-  </header>
+      <a href="{{ url_for('logout') }}">Déconnexion</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Connexion</a>
+    {% endif %}
+  </nav>
+</header>
 
   <a href="#">
     <img src="https://media.istockphoto.com/id/171265348/fr/photo/trois-m%C3%A9dailles-olympiques-drapeau.jpg?s=2048x2048&w=is&k=20&c=uiU5Knn_CxT9D44K8o2tZjZ-jzGKaZvfxoAMft7P6AE=" alt="Anneaux Olympiques" class="hero-image">
