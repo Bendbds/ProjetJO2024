@@ -159,3 +159,20 @@ footer {
 footer p {
     margin: 0;
 }
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    nav a {
+        margin: 0.5rem;
+        display: inline-block;
+    }
+
+    .hero {
+        width: 90%;
+        margin: 1rem auto;
+        padding: 1rem;
+    }

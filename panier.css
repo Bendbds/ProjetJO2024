@@ -7,15 +7,15 @@ html, body {
     font-family: "Segoe UI", sans-serif;
     color: #333;
     background-color: #f5f5f5;
-  }
+}
 
-  main {
+main {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2rem 1rem;
-  }
+}
 
 /* Image de la section héro */
 .hero-image {
@@ -28,7 +28,7 @@ html, body {
 
 /* En-tête avec fond bleu olympique */
 header {
-    background: rgba(0, 85, 164, 0.8); /* Bleu olympique avec transparence */
+    background: rgba(0, 85, 164, 0.8);
     color: white;
     padding: 1rem 2rem;
     display: flex;
@@ -93,16 +93,13 @@ h3 {
 }
 
 /* Style de base pour le message lorsque le panier est vide */
-/* Retirer le flex sur le conteneur */
 #cart-items {
-    display: block; /* Retirer le flexbox ici */
-    justify-content: center; /* Enlever cela, ce n'est plus nécessaire */
-    align-items: center; /* Enlever cela, ce n'est plus nécessaire */
-    padding: 20px; /* Un peu de padding pour plus d'espace autour */
+    display: block;
+    padding: 20px;
     text-align: center;
     font-size: 1.2rem;
     background: #ffcd00;
-    width: 80%; 
+    width: 80%;
     max-width: 500px;
     margin: 0 auto;
     border-radius: 10px;
@@ -118,14 +115,14 @@ h3 {
 
 /* Chaque élément de la liste (article dans le panier) */
 #cart-items li {
-    padding: 15px; /* Augmenter un peu l'espace interne */
+    padding: 15px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     font-size: 1.2rem;
     color: #333;
     text-align: center;
-    margin-bottom: 15px; /* Ajoute un espace entre chaque élément */
+    margin-bottom: 15px;
 }
 
 /* Centrer le total du panier également */
@@ -201,6 +198,109 @@ h3 {
     background-color: #003d73;
 }
 
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 8px 15px;  /* Réduit le padding pour une taille plus petite */
+  min-width: 200px;  /* Largeur minimale */
+  max-width: 350px;  /* Largeur maximale */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: sans-serif;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+  height: 100px;  
+  line-height: 1.4;  /* Ajuste la ligne pour que le texte soit plus compact */
+}
+
+.toast.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.toast.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.toast-close {
+  cursor: pointer;
+  margin-left: 12px;
+  font-weight: bold;
+  font-size: 18px;  /* Taille plus petite pour la croix */
+  line-height: 1;
+}
+
+
+/* Modal d'erreur */
+.modal {
+  display: none; /* par défaut cachée */
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4);
+  
+  /* Ces deux lignes sont ajoutées */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%; /* Nouvelle largeur */
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.close-btn {
+  float: right;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+button {
+  padding: 10px 20px;
+  margin-top: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #f44336;  /* Rouge pour l'alerte */
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #d32f2f;
+}
+
 footer {
     margin: auto 0 0 0;
     text-align: center;
@@ -208,8 +308,65 @@ footer {
     background: rgba(34, 34, 34, 0.8);
     color: #eee;
     font-size: 0.9rem;
-  }
-  
-  footer p {
+}
+
+footer p {
     margin: 0;
-  }
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    nav a {
+        margin: 0.5rem;
+        display: inline-block;
+    }
+
+    .hero {
+        width: 90%;
+        margin: 1rem auto;
+        padding: 1rem;
+    }
+    
+#cart-items {
+    width: 95%;
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto; /* Centrage automatique */
+    padding: 15px;
+    box-sizing: border-box; /* Assure que la largeur inclut le padding */
+}
+
+    #cart-items li {
+        font-size: 1rem;
+        padding: 10px;
+    }
+
+    .cta-button,
+    #clear-cart {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+    }
+
+    .form-container {
+        width: 90%;
+        padding: 1.5rem;
+    }
+
+    h3 {
+        font-size: 1.5rem;
+    }
+
+    .hero-image {
+        width: 90%;
+    }
+}
+
