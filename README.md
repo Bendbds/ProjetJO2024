@@ -1,14 +1,24 @@
-# ProjetJO2024
-# Projet JO 2024 - Application Flask
+# 🏅 ProjetJO2024 – Application Web Flask
 
-Application web développée en Python avec Flask, permettant la gestion d'utilisateurs, une interface d'administration, et un système de paiement via Stripe.
+Application web développée en **Python (Flask)** pour la gestion de billets des **Jeux Olympiques 2024**, avec :
+
+- Authentification sécurisée
+- Paiement Stripe
+- Génération de code-barres avec **JsBarcode (côté front)**
+- Interface utilisateur et administrateur
+
+---
 
 ## 🚀 Fonctionnalités
 
-- Inscription et connexion sécurisées avec `bcrypt`
-- Interface utilisateur et interface admin
-- Intégration Stripe pour paiements
-- Utilisation d'un fichier `.env` pour gérer les clés sensibles
+- ✅ Inscription / Connexion sécurisées avec **bcrypt**
+- ✅ Système de panier pour utilisateurs anonymes et connectés
+- ✅ Interface admin : gestion des offres, utilisateurs, paiements
+- ✅ Intégration **Stripe** pour les paiements sécurisés
+- ✅ Génération de **code-barres côté front** via **JsBarcode**
+- ✅ Utilisation d’un fichier `.env` pour les clés sensibles
+- ✅ Affichage dynamique des tickets après achat
+- 🔒 Gestion sécurisée des sessions, inputs et mot de passe
 
 ---
 
@@ -16,14 +26,17 @@ Application web développée en Python avec Flask, permettant la gestion d'utili
 
 - Python 3.x
 - Flask
-- Flask SQLAlchemy
-- Bcrypt (pour hachage sécurisé des mots de passe)
+- Flask-SQLAlchemy
+- Flask-Login
+- Bcrypt
 - Stripe API
-- Dotenv (.env)
+- JsBarcode (CDN)
+- SQLite / MySQL
+- Dotenv
 
 ---
 
-## 📦 Installation
+## 📦 Installation locale
 
 ### 1. Cloner le projet
 
@@ -35,15 +48,15 @@ bash
 Copier
 Modifier
 python -m venv venv
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate     # Windows
+source venv/bin/activate        # macOS / Linux
+venv\Scripts\activate           # Windows
 3. Installer les dépendances
 bash
 Copier
 Modifier
 pip install -r requirements.txt
-4. Configurer les variables d'environnement
-Créer un fichier .env à la racine du projet avec le contenu suivant :
+4. Configurer les variables d’environnement
+Créer un fichier .env à la racine du projet :
 
 ini
 Copier
@@ -52,12 +65,9 @@ SECRET_KEY=une_clé_ultra_secrète
 STRIPE_SECRET_KEY=sk_test_...
 YOUR_DOMAIN=http://localhost:5000
 🗃️ Base de données
-Le projet utilise SQLite (ou autre selon votre config).
+Utilise SQLite par défaut (modifiable pour MySQL/PostgreSQL)
 
-✅ Important :
-Le champ password de la table User doit être de type BLOB pour fonctionner avec bcrypt.
-
-Exemple avec HeidiSQL :
+Exemple de table utilisateur (SQLite/MySQL) :
 
 sql
 Copier
@@ -69,33 +79,59 @@ CREATE TABLE user (
     password BLOB NOT NULL,
     is_admin BOOLEAN DEFAULT FALSE
 );
-▶️ Lancer l'application
+⚠️ Le champ password doit être en BLOB pour fonctionner avec bcrypt.
+
+▶️ Lancer l’application
 bash
 Copier
 Modifier
 python app.py
-Puis accéder à l'application via :
+Accès :
+📍 http://localhost:5000
 
-arduino
+👮 Accès administrateur
+Pour accéder à /admin, un utilisateur doit avoir :
+
+sql
 Copier
 Modifier
-http://localhost:5000
-👮 Admin
-Pour accéder à la partie admin, un utilisateur doit avoir is_admin = True dans la base.
-
+is_admin = TRUE
 💳 Paiement avec Stripe
-Stripe est intégré à l'application.
+Le backend utilise l’API Stripe pour créer des sessions de paiement.
 
-Le backend gère la création de sessions de paiement via l'API.
+Une fois le paiement validé, une transaction est enregistrée.
 
-YOUR_DOMAIN dans .env doit correspondre à l'URL de base utilisée (ex. : localhost ou domaine en production).
+Un code-barres unique est généré côté front avec JsBarcode, basé sur un identifiant ou token sécurisé renvoyé par le backend.
 
-🛠️ À améliorer plus tard
-Organisation du projet en modules (routes, models, config)
+📟 Génération du code-barres (via JsBarcode)
+Dans la page de confirmation, un code-barres est généré automatiquement à partir des données renvoyées par le backend :
 
-Ajout de tests automatisés
+html
+Copier
+Modifier
 
-Déploiement sur Render, Heroku ou autre
+🛠️ À améliorer / à venir
+🧱 Structuration en modules (routes, models, services, etc.)
+
+✅ Tests automatisés (unitaires et fonctionnels)
+
+📦 Déploiement sur Render / Fly.io / o2switch / Railway
+
+📧 Envoi d’e-mails avec code-barres en pièce jointe
+
+📱 Design responsive / PWA
 
 📄 Licence
-Projet développé à titre pédagogique dans le cadre des JO 2024.
+Projet réalisé à des fins pédagogiques dans le cadre des Jeux Olympiques de Paris 2024.
+Développé par [Ton Prénom NOM] — Tous droits réservés.
+
+🔗 Liens utiles
+Stripe API Docs
+
+Flask Documentation
+
+JsBarcode
+
+Fly.io
+
+o2Switch
