@@ -1,5 +1,0 @@
-FLASK_SECRET_KEY=582e377cd77735ef1df7b20ad31b58cc
-STRIPE_SECRET_KEY=sk_test_51RLUP4Qs4Dx5GPhfEUxwZIxqL1URSHI3MeLcL1cgYsjNzrCJnOCuCqKANVA7v5PX05nrC8aNeFwyjmr7kcyp3Kst005aRW0K0H
-DATABASE_URL=mysql+pymysql://wicu1021_bendbds:Bidule14!@localhost:3306/wicu1021_projetjo2024
-
-
