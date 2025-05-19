@@ -9,11 +9,10 @@
 <body>
 
 <header>
-  <h1> Bienvenue sur le site des JO Paris 2024</h1>
+  <h1>🛒 Bienvenue sur le site des JO Paris 2024</h1>
   <nav>
     <a href="{{ url_for('index') }}">Accueil</a>
     <a href="{{ url_for('panier') }}">Panier</a>
-    <a href="{{ url_for('mes_billets') }}">Mes Billets</a>
     {% if current_user.is_authenticated %}
       <span>Connecté</span>
       {% if current_user.is_admin %}
@@ -36,96 +35,41 @@
     <p>Profitez d'offres solo, duo ou familiale pour vivre les JO comme jamais.</p>
   </section>
 
-  <section class="events">
-    <h2>Événements existants</h2>
-    {% for event in events %}
-      <div class="card">
-        <h4>{{ event.name }}</h4>
-        <p>{{ event.location }}
-          {% if event.end_date %}
-            {{ event.date.strftime('%d %B %Y') }} – {{ event.end_date.strftime('%d %B %Y') }}
-          {% else %}
-            {{ event.date.strftime('%d %B %Y') }}
-          {% endif %}
-        </p>
-        <p>À partir de {{ event.price }} €</p>
-        <p>Places restantes : {{ event.stock }}</p>
-        {% if event.stock > 0 %}
-          <button class="add-to-cart"
-                  data-title="{{ event.name }}"
-                  data-price="{{ event.price }}"
-                  data-event-id="{{ event.id }}">
-            Ajouter au panier
-          </button>
+ <section class="events">
+  <h2>Événements existants</h2>
+  {% for event in events %}
+    <div class="card">
+      <h4>{{ event.name }}</h4>
+      <p>{{ event.location }}
+        {% if event.end_date %}
+          {{ event.date.strftime('%d %B %Y') }} – {{ event.end_date.strftime('%d %B %Y') }}
         {% else %}
-          <button class="add-to-cart" disabled>
-            Épuisé
-          </button>
+          {{ event.date.strftime('%d %B %Y') }}
         {% endif %}
-      </div>
-    {% endfor %}
-  </section>
-</main>
+      </p>
+      <p>À partir de {{ event.price }} €</p>
+      <p>Places restantes : {{ event.stock }}</p>
+      {% if event.stock > 0 %}
+        <button class="add-to-cart"
+                data-title="{{ event.name }}"
+                data-price="{{ event.price }}"
+                data-event-id="{{ event.id }}">
+          Ajouter au panier
+        </button>
+      {% else %}
+        <button class="add-to-cart" disabled>
+          Épuisé
+        </button>
+      {% endif %}
+    </div>
+  {% endfor %}
+</section>
 
-<!-- Toast de notification -->
-<div id="toast" class="toast" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px 20px; border-radius: 5px; z-index: 9999; font-weight: bold;">
-  <span id="toast-message">Message</span>
-  <span class="toast-close" onclick="hideToast()" style="margin-left: 10px; cursor: pointer;">✖</span>
-</div>
+</main>
 
 <footer>
   <p>&copy; 2024 Paris 2024 - Tous droits réservés</p>
 </footer>
-
-<script>
-function showToast(message, type = 'info') {
-  const toast = document.getElementById('toast');
-  const msg = document.getElementById('toast-message');
-
-  msg.textContent = message;
-  toast.style.backgroundColor = type === 'error' ? '#f8d7da' : '#d4edda';
-  toast.style.color = type === 'error' ? '#721c24' : '#155724';
-  toast.style.borderColor = type === 'error' ? '#f5c6cb' : '#c3e6cb';
-  toast.style.display = 'flex';
-
-  setTimeout(() => {
-    toast.style.display = 'none';
-  }, 3000);
-}
-
-function hideToast() {
-  document.getElementById('toast').style.display = 'none';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.add-to-cart').forEach(button => {
-    button.addEventListener('click', async () => {
-      const eventId = button.dataset.eventId;
-
-      try {
-        const response = await fetch(`/ajouter_au_panier/${eventId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        const result = await response.json();
-
-        if (response.status === 401 || result.message.includes("connecté")) {
-          showToast("Vous devez être connecté pour ajouter au panier.", 'error');
-        } else if (response.ok) {
-          showToast("Billet ajouté au panier !", 'success');
-        } else {
-          showToast("Une erreur est survenue.", 'error');
-        }
-      } catch (error) {
-        showToast("Erreur de communication avec le serveur.", 'error');
-        console.error(error);
-      }
-    });
-  });
-});
-</script>
-
 <script src="{{ url_for('static', filename='panier.js') }}"></script>
 </body>
 </html>

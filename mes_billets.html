@@ -5,23 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JO Paris 2024 - Mes Billets</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <style>
-    .card {
-      border: 1px solid #ddd;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      border-radius: 8px;
-      background-color: #f9f9f9;
-    }
-    .barcode {
-      max-width: 200px;
-      height: 80px;
-    }
-  </style>
 </head>
 <body>
 
@@ -31,11 +14,11 @@
     <a href="{{ url_for('index') }}">Accueil</a>
     <a href="{{ url_for('panier') }}">Panier</a>
     {% if current_user.is_authenticated %}
-      <span>Connecté</span>
+      <span>ConnectÃ©</span>
       {% if current_user.is_admin %}
         <a href="{{ url_for('admin_dashboard') }}">Administration</a>
       {% endif %}
-      <a href="{{ url_for('logout') }}">Déconnexion</a>
+      <a href="{{ url_for('logout') }}">DÃ©connexion</a>
     {% else %}
       <a href="{{ url_for('login') }}">Connexion</a>
     {% endif %}
@@ -43,27 +26,26 @@
 </header>
 
 <main>
-  <section class="hero" style="margin-bottom: 2rem; text-align: center;">
-    <img src="{{ url_for('static', filename='logo_jo.png') }}" alt="Logo JO" style="max-height: 80px; margin-bottom: 1rem;">
+  <section class="hero" style="margin-bottom: 2rem;">
     <h2>Mes Billets</h2>
-    <p>Retrouvez ici tous vos billets achetés avec leurs codes-barres.</p>
-    {% if tickets %}
-      <button onclick="window.print()" style="margin-top: 1rem; padding: 0.5rem 1rem; font-size: 1rem;">🖨️ Imprimer mes billets</button>
-    {% endif %}
+    <p>Retrouvez ici tous vos billets achetÃ©s avec leurs QR codes.</p>
   </section>
 
 <section class="events">
   {% if tickets %}
     {% for ticket in tickets %}
-      <div class="card billet" id="billet-{{ ticket.id }}">
+      <div class="card">
         <div>
           <h4>{{ ticket.event.name if ticket.event else 'Événement inconnu' }}</h4>
           <p>Date : {{ ticket.event.date.strftime('%d/%m/%Y') if ticket.event else 'Date inconnue' }}</p>
         </div>
         <div>
-          <svg id="barcode-{{ ticket.id }}" class="barcode"></svg>
+          {% if ticket.qr_code_filename %}
+            <img src="{{ url_for('static', filename='qrcodes/' + ticket.qr_code_filename) }}" alt="QR Code">
+          {% else %}
+            <p>QR code non disponible</p>
+          {% endif %}
         </div>
-        <button onclick="printBillet('billet-{{ ticket.id }}')">🖨️ Imprimer ce billet</button>
       </div>
     {% endfor %}
   {% else %}
@@ -73,43 +55,9 @@
 
 </main>
 
-
 <footer>
-  <p>&copy; 2024 Paris 2024 - Tous droits réservés</p>
+  <p>&copy; 2024 Paris 2024 - Tous droits rÃ©servÃ©s</p>
 </footer>
-
-<!-- Import JsBarcode -->
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-<script>
-  function printBillet(id) {
-    const billet = document.getElementById(id);
-    const originalContents = document.body.innerHTML;
-    const printContents = billet.outerHTML;
-    
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-
-    // Recharger les barcodes après impression
-    location.reload();
-  }
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    {% for ticket in tickets %}
-      JsBarcode("#barcode-{{ ticket.id }}", "{{ ticket.qr_code_content }}", {
-        format: "CODE128",
-        lineColor: "#000",
-        width: 2,
-        height: 60,
-        displayValue: true
-      });
-    {% endfor %}
-  });
-</script>
 
 </body>
 </html>
-
-

@@ -12,28 +12,32 @@ import pymysql
 pymysql.install_as_MySQLdb()
 
 
+# Charger les variables d'environnement
 load_dotenv()
 
+# Créer l'application Flask
 app = Flask(__name__)
+
+# Configuration de l'application
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# ---------------------
+# EXTENSIONS
+# ---------------------
+
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+migrate = Migrate(app, db)  # <-- ici !
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-YOUR_DOMAIN = 'https://app.benoit-dbds.fr'
+YOUR_DOMAIN = 'http://localhost:5000'
 
-# ----- Unauthorized Handler for AJAX -----
-@login_manager.unauthorized_handler
-def unauthorized_callback():
-    if request.is_json or request.accept_mimetypes.accept_json:
-        return jsonify({"message": "Vous devez être connecté pour ajouter au panier."}), 401
-    return redirect(url_for('login'))
+# ---------------------
+# MODELS
+# ---------------------
 
-# ----- MODELS -----
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
@@ -45,52 +49,37 @@ class CartItem(db.Model):
     offer_name = db.Column(db.String(100))
     price = db.Column(db.Float)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    temp_user_id = db.Column(db.String(36))
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
-    event = db.relationship('Event', backref=db.backref('cart_items', lazy=True))
+    temp_user_id = db.Column(db.String(36))  # ID pour utilisateur temporaire
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))  # Relation avec Event
+    event = db.relationship('Event', backref=db.backref('cart_items', lazy=True))  # Optionnel pour récupérer l'événement associé
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=True)
+    date = db.Column(db.Date, nullable=False)  # Date de début
+    end_date = db.Column(db.Date, nullable=True)  # Date de fin (optionnelle)
     price = db.Column(db.Float, nullable=False)
-    stock = db.Column(db.Integer, default=100)
+    stock = db.Column(db.Integer, default=100)  # Nombre max de places
 
-class Ticket(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
-    qr_code_filename = db.Column(db.String(100))  # Nom du fichier QR code généré
-    barcode_value = db.Column(db.String(100))  # Valeur pour le code-barres
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+# ---------------------
+# FLASK-LOGIN
+# ---------------------
 
-    user = db.relationship('User', backref='tickets')
-    event = db.relationship('Event', backref='tickets')
-    
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def get_cart_items():
-    if current_user.is_authenticated:
-        return CartItem.query.filter_by(user_id=current_user.id).all()  # Panier pour les utilisateurs authentifiés
-    else:
-        temp_id = session.get("temp_user_id")
-        if not temp_id:
-            temp_id = str(uuid.uuid4())
-            session["temp_user_id"] = temp_id
-        return CartItem.query.filter_by(temp_user_id=temp_id).all()  # Panier temporaire pour les utilisateurs non authentifiés
+# ---------------------
+# UTILITAIRES
+# ---------------------
 
-@app.route('/')
-def index():
-    events = Event.query.all()
-    for event in events:
-        if isinstance(event.date, datetime):
-            event.formatted_date = event.date.strftime("%d %B %Y")
-        else:
-            event.formatted_date = event.date
-    return render_template('index.html', events=events)
+def get_cart_items():
+    user_id = current_user.id if current_user.is_authenticated else session.get('temp_user_id')
+    return CartItem.query.filter_by(user_id=user_id).all()
+
+# ---------------------
+# ROUTES : AUTHENTIFICATION
+# ---------------------
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -121,33 +110,15 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        confirm_password = request.form['confirm_password']
         user = User.query.filter_by(email=email).first()
 
-        # Vérification si les mots de passe saisis ne correspondent pas
-        if password != confirm_password:
-            flash("Les mots de passe ne correspondent pas.", "error")
-            return redirect(url_for('login'))
-
-        # Vérification que l'utilisateur existe et que son mot de passe est valide
-        if not user or not isinstance(user.password, (bytes, bytearray)):
-            flash("Email ou mot de passe incorrect.", "error")
-            return redirect(url_for('login'))
-
-        try:
-            # Vérification du mot de passe sans encoder à nouveau le hash
-            if not bcrypt.checkpw(password.encode('utf-8'), user.password):
-                flash("Email ou mot de passe incorrect.", "error")
-                return redirect(url_for('login'))
-        except Exception as e:
-            print(f"Erreur avec bcrypt: {e}")  # Log pour debug
-            flash("Une erreur est survenue lors de la vérification du mot de passe.", "error")
-            return redirect(url_for('login'))
-
-        # Connexion réussie
-        login_user(user)
-        flash("Connexion réussie.", "success")
-        return redirect(url_for('index'))
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password):
+            login_user(user)
+            flash("Connexion réussie.")
+            return redirect(url_for('index'))
+        else:
+            # Ici, nous renvoyons une réponse JSON en cas d'erreur
+            return jsonify({"error": "Email ou mot de passe incorrect"}), 400
 
     return render_template('connexion.html')
 
@@ -158,74 +129,54 @@ def logout():
     flash("Déconnexion réussie.")
     return redirect(url_for('index'))
 
-@app.route('/add_to_cart', methods=['POST'])
+# ---------------------
+# ROUTES : ACCUEIL
+# ---------------------
+
+@app.route('/')
+def index():
+    events = Event.query.all()
+    # Formater la date en français pour chaque événement
+    for event in events:
+        # Vérifier si la date est un objet Date
+        if isinstance(event.date, datetime):
+            event.formatted_date = event.date.strftime("%d %B %Y")  # Format en français
+        else:
+            event.formatted_date = event.date  # Si la date n'est pas un objet Date valide
+
+    return render_template('index.html', events=events)
+
+# ---------------------
+# ROUTES : PANIER
+# ---------------------
+
+@app.route("/add_to_cart", methods=["POST"])
 @login_required
 def add_to_cart():
-    try:
-        # Récupérer les données JSON envoyées par le front-end
-        data = request.get_json()
-        title = data.get("title")
-        price = float(data.get("price"))
-        event_id = data.get("event_id")
-        
-        # Trouver l'événement pour vérifier le stock
-        event = Event.query.get(event_id)
-        
-        if not event:
-            return jsonify({"message": "Événement introuvable."}), 404
-        
-        if event.stock <= 0:
-            return jsonify({"message": "Désolé, cet événement est complet."}), 400
-        
-        # Créer un nouvel article de panier pour l'utilisateur authentifié
-        cart_item = CartItem(
-            offer_name=title,
-            price=price,
-            event_id=event_id,
-            user_id=current_user.id  # On associe cet article à l'utilisateur connecté
-        )
-        
-        # Ajouter l'article au panier (dans la base de données)
-        db.session.add(cart_item)
-        event.stock -= 1  # Décrémenter le stock de l'événement immédiatement
-        db.session.commit()
-        
-        # Retourner un message de succès
-        return jsonify({"message": "Ajouté au panier !"}), 200
-    
-    except Exception as e:
-        db.session.rollback()  # En cas d'erreur, annuler la transaction
-        return jsonify({"message": f"Erreur de communication avec le serveur: {str(e)}"}), 500
+    data = request.get_json()
+    title = data["title"]
+    price = float(data["price"])
+    event_id = data["event_id"]
 
-@app.route('/remove_from_cart/<int:item_id>', methods=['POST'])
-@login_required
-def remove_from_cart(item_id):
-    try:
-        # Trouver l'article dans le panier de l'utilisateur
-        cart_item = CartItem.query.get(item_id)
-        
-        if cart_item is None:
-            return jsonify({"message": "Article introuvable dans le panier."}), 404
-        
-        # Vérifier si l'article appartient à l'utilisateur connecté
-        if cart_item.user_id != current_user.id:
-            return jsonify({"message": "Vous ne pouvez pas supprimer cet article."}), 403
-        
-        # Récupérer l'événement associé à l'article du panier
-        event = Event.query.get(cart_item.event_id)
-        if event:
-            # Rétablir le stock de l'événement (augmenter de 1)
-            event.stock += 1
-        
-        # Supprimer l'article du panier
-        db.session.delete(cart_item)
+    # Log pour vérifier si les données arrivent
+    print(f"Ajout au panier: {title}, {price}, {event_id}")
+
+    event = Event.query.get(event_id)
+    if event and event.stock > 0:
+        if current_user.is_authenticated:
+            cart_item = CartItem(event_id=event_id, user_id=current_user.id, offer_name=title, price=price)
+        else:
+            if 'temp_user_id' not in session:
+                session['temp_user_id'] = str(uuid.uuid4())
+            cart_item = CartItem(event_id=event_id, temp_user_id=session['temp_user_id'], offer_name=title, price=price)
+
+        db.session.add(cart_item)
+        event.stock -= 1
         db.session.commit()
-        
-        return jsonify({"message": "Article supprimé du panier avec succès !"}), 200
-    
-    except Exception as e:
-        db.session.rollback()  # Annuler la transaction en cas d'erreur
-        return jsonify({"message": f"Erreur de communication avec le serveur: {str(e)}"}), 500
+
+        return jsonify({"message": "Ajouté au panier!"})
+    else:
+        return jsonify({"message": "Stock épuisé ou événement introuvable."}), 400
 
 @app.route('/cart')
 def cart():
@@ -241,23 +192,34 @@ def panier():
 @app.route('/clear_cart', methods=['POST'])
 def clear_cart():
     if current_user.is_authenticated:
+        # Récupérer les items du panier avant suppression
         cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+        
+        # Augmenter le stock des événements supprimés du panier
         for item in cart_items:
             event = Event.query.get(item.event_id)
             if event:
-                event.stock += 1
-        CartItem.query.filter_by(user_id=current_user.id).delete()
+                event.stock += 1  # Ajouter une place au stock de l'événement supprimé
+        CartItem.query.filter_by(user_id=current_user.id).delete()  # Supprimer tous les items du panier
     else:
         temp_id = session.get('temp_user_id')
         if temp_id:
+            # Récupérer les items du panier pour l'utilisateur temporaire
             cart_items = CartItem.query.filter_by(temp_user_id=temp_id).all()
+            
+            # Augmenter le stock des événements supprimés du panier
             for item in cart_items:
                 event = Event.query.get(item.event_id)
                 if event:
-                    event.stock += 1
-            CartItem.query.filter_by(temp_user_id=temp_id).delete()
+                    event.stock += 1  # Ajouter une place au stock de l'événement supprimé
+            CartItem.query.filter_by(temp_user_id=temp_id).delete()  # Supprimer les items du panier temporaire
+    
     db.session.commit()
     return '', 204
+
+# ---------------------
+# ROUTES : PAIEMENT
+# ---------------------
 
 @app.route('/create-checkout-session', methods=['POST'])
 @login_required
@@ -270,14 +232,16 @@ def create_checkout_session():
     try:
         session_stripe = stripe.checkout.Session.create(
             payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'eur',
-                    'product_data': {'name': item.offer_name},
-                    'unit_amount': int(item.price * 100),
-                },
-                'quantity': 1,
-            } for item in items],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'eur',
+                        'product_data': {'name': item.offer_name},
+                        'unit_amount': int(item.price * 100),
+                    },
+                    'quantity': 1,
+                } for item in items
+            ],
             mode='payment',
             success_url=YOUR_DOMAIN + '/success',
             cancel_url=YOUR_DOMAIN + '/panier',
@@ -290,56 +254,25 @@ def create_checkout_session():
 @app.route('/success')
 @login_required
 def success():
-    try:
-        items = CartItem.query.filter_by(user_id=current_user.id).all()
-        if not items:
-            flash("Votre panier est vide.", "warning")
-            return redirect(url_for('panier'))
+    items = CartItem.query.filter_by(user_id=current_user.id).all()
 
-        tickets = []
+    for item in items:
+        if item.event:
+            if item.event.stock > 0:
+                item.event.stock -= 1
+            else:
+                flash(f"Stock insuffisant pour {item.offer_name}.")
+                return redirect(url_for('panier'))
 
-        for item in items:
-            if item.event:
-                if item.event.stock > 0:
-                    item.event.stock -= 1
-                else:
-                    flash(f"Stock insuffisant pour {item.offer_name}.", "danger")
-                    return redirect(url_for('panier'))
+    CartItem.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    flash("Paiement réussi. Merci !")
+    return redirect(url_for('index'))
 
-                # Création du ticket avec valeur unique pour code-barres
-                ticket = Ticket(
-                    user_id=current_user.id,
-                    event_id=item.event_id,
-                    qr_code_filename=None,
-                    barcode_value=str(uuid.uuid4()),  # <-- Valeur unique pour le code-barres
-                    created_at=datetime.utcnow()
-                )
-                tickets.append(ticket)
+# ---------------------
+# ROUTES : ADMINISTRATION
+# ---------------------
 
-        db.session.add_all(tickets)
-        CartItem.query.filter_by(user_id=current_user.id).delete()
-        db.session.commit()
-
-        flash("Paiement réussi ! Vos billets sont disponibles.", "success")
-        return redirect(url_for('mes_billets'))
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Une erreur est survenue : {e}", "danger")
-        return redirect(url_for('panier'))
-
-@app.route('/mes_billets')
-@login_required
-def mes_billets():
-    try:
-        tickets = Ticket.query.filter_by(user_id=current_user.id).all()
-        for ticket in tickets:
-            ticket.qr_code_content = ticket.barcode_value  # Ajout du contenu du code-barres
-        return render_template('mes_billets.html', tickets=tickets)
-    except Exception as e:
-        flash(f"Erreur lors du chargement de vos billets : {e}", "danger")
-        return redirect(url_for('index'))
-        
 @app.route('/admin')
 @login_required
 def admin_dashboard():
@@ -353,39 +286,47 @@ def admin_dashboard():
 def add_event():
     if not current_user.is_admin:
         return redirect(url_for('index'))
-
+    
     name = request.form['name']
     start_date = request.form['start_date']
     end_date = request.form['end_date']
     price = request.form['price']
-
+    
+    # Validation
     try:
         price = float(price)
+    except ValueError:
+        flash("Le prix doit être un nombre valide.")
+        return redirect(url_for('admin_dashboard'))
+    
+    try:
         event_start_date = datetime.strptime(start_date, "%Y-%m-%d")
         event_end_date = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
     except ValueError:
-        flash("Erreur de format pour la date ou le prix.")
+        flash("Les dates doivent être au format YYYY-MM-DD.")
         return redirect(url_for('admin_dashboard'))
-
+    
     new_event = Event(name=name, date=event_start_date, price=price, end_date=event_end_date)
     db.session.add(new_event)
     db.session.commit()
+
     flash("Événement ajouté avec succès!", "success")
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
 def edit_event(event_id):
-    event = Event.query.get(event_id)
+    event = Event.query.get(event_id)  # Récupère l'événement par son ID
     if request.method == 'POST':
+        # Mise à jour de l'événement avec les nouvelles dates
         event.name = request.form['name']
         event.date = datetime.strptime(request.form['start_date'], '%Y-%m-%d')
-        end_date = request.form.get('end_date')
+        end_date = request.form.get('end_date')  # La date de fin est optionnelle
         if end_date:
             event.end_date = datetime.strptime(end_date, '%Y-%m-%d')
         event.price = request.form['price']
-        db.session.commit()
+        db.session.commit()  # Sauvegarde dans la base de données
         flash('Événement mis à jour avec succès!', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('index'))  # Redirige vers la page d'accueil ou la liste des événements
     return render_template('edit_event.html', event=event)
 
 @app.route('/admin/delete_event/<int:event_id>', methods=['POST'])
@@ -393,12 +334,14 @@ def edit_event(event_id):
 def delete_event(event_id):
     if not current_user.is_admin:
         return redirect(url_for('index'))
+
     event = Event.query.get_or_404(event_id)
     db.session.delete(event)
     db.session.commit()
+
     flash("Événement supprimé avec succès!", "success")
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port)
