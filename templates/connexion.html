@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion – JO Paris 2024</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='connexion.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <header>
+    <h1>Connexion</h1>
+    <nav>
+      <a href="{{ url_for('index') }}">Accueil</a>
+      <a href="{{ url_for('panier') }}">Panier</a>
+    </nav>
+  </header>
+
+  <a href="#">
+    <img src="https://media.istockphoto.com/id/171265348/fr/photo/trois-m%C3%A9dailles-olympiques-drapeau.jpg?s=2048x2048&w=is&k=20&c=uiU5Knn_CxT9D44K8o2tZjZ-jzGKaZvfxoAMft7P6AE=" alt="Anneaux Olympiques" class="hero-image">
+  </a>
+
+  <main>
+    <form method="POST" action="{{ url_for('login') }}">
+      <label>Email :</label>
+      <input type="email" name="email" required />
+      <label>Mot de passe :</label>
+      <input type="password" name="password" required />
+      <label>Confirmez le mot de passe :</label>
+      <input type="password" name="confirm_password" required />
+      <div id="password-error" class="error-box" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="password-error-message"></span>
+      </div>
+      <button type="submit">Se connecter</button>
+      <p>Pas encore de compte ? <a href="{{ url_for('register') }}">Créer un compte</a></p>
+    </form>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 Paris 2024 - Tous droits réservés</p>
+  </footer>
+
+  <!-- Pop-up d'erreur -->
+  <div id="errorModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <i class="fas fa-times-circle error-icon"></i>
+      <p id="errorMessage"></p>
+    </div>
+  </div>
+
+  <script>
+    function showErrorModal(message) {
+      document.getElementById("errorMessage").textContent = message;
+      document.getElementById("errorModal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("errorModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+      if (event.target == document.getElementById("errorModal")) {
+        closeModal();
+      }
+    };
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == "error" %}
+            showErrorModal({{ message | tojson | safe }});
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("form");
+      const password = document.querySelector("input[name='password']");
+      const confirmPassword = document.querySelector("input[name='confirm_password']");
+      const errorBox = document.getElementById("password-error");
+      const errorMessage = document.getElementById("password-error-message");
+
+      form.addEventListener("submit", (event) => {
+        if (password.value !== confirmPassword.value) {
+          event.preventDefault(); // Empêche l'envoi du formulaire
+          errorMessage.textContent = "Les mots de passe ne correspondent pas !";
+          errorBox.style.display = "flex"; // Affiche la boîte d'erreur
+        }
+      });
+
+      // Cache l'erreur si l'utilisateur modifie le champ
+      confirmPassword.addEventListener("input", () => {
+        errorBox.style.display = "none";
+      });
+    });
+  </script>
+
+</body>
+</html>
+
+
