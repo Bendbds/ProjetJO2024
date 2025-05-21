@@ -75,67 +75,8 @@
   </div>
 </div>
 
-<script>
-function showToast(message, type = 'info') {
-  const toast = document.getElementById('toast');
-  const msg = document.getElementById('toast-message');
-
-  msg.textContent = message;
-  toast.style.backgroundColor = type === 'error' ? '#f8d7da' : '#d4edda';
-  toast.style.color = type === 'error' ? '#721c24' : '#155724';
-  toast.style.borderColor = type === 'error' ? '#f5c6cb' : '#c3e6cb';
-  toast.style.display = 'flex';
-
-  setTimeout(() => {
-    toast.style.display = 'none';
-  }, 3000);
-}
-
-function hideToast() {
-  document.getElementById('toast').style.display = 'none';
-}
-
-function showModal(message) {
-  const modal = document.getElementById('errorModal');
-  const errorMessage = document.getElementById('errorMessage');
-  errorMessage.textContent = message;
-  modal.style.display = 'block';
-}
-
-function closeModal() {
-  document.getElementById('errorModal').style.display = 'none';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const isAuthenticated = document.body.getAttribute('data-authenticated') === 'true';
-
-  // Bloquer le paiement si non connecté
-  document.getElementById('checkout-form').addEventListener('submit', function (e) {
-    if (!isAuthenticated) {
-      e.preventDefault();
-      showToast("Vous devez être connecté pour procéder au paiement.", 'error');
-    }
-  });
-
-  // Vider le panier
-  const clearBtn = document.getElementById("clear-cart");
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      fetch("/clear_cart", { method: "POST" })
-        .then(() => {
-          document.getElementById("cart-items").innerHTML = "<p>Votre panier est vide.</p>";
-          document.getElementById("total").textContent = "Total Panier : 0 €";
-          showToast("Panier vidé avec succès.", 'success');
-        })
-        .catch(err => {
-          console.error(err);
-          showToast("Erreur lors de la suppression du panier.", 'error');
-        });
-    });
-  }
-});
-</script>
-
 <script src="{{ url_for('static', filename='panier.js') }}"></script>
+<script src="{{ url_for('static', filename='panier_main.js') }}"></script>
+
 </body>
 </html>

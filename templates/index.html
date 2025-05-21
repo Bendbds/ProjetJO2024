@@ -77,55 +77,9 @@
   <p>&copy; 2024 Paris 2024 - Tous droits réservés</p>
 </footer>
 
-<script>
-function showToast(message, type = 'info') {
-  const toast = document.getElementById('toast');
-  const msg = document.getElementById('toast-message');
-
-  msg.textContent = message;
-  toast.style.backgroundColor = type === 'error' ? '#f8d7da' : '#d4edda';
-  toast.style.color = type === 'error' ? '#721c24' : '#155724';
-  toast.style.borderColor = type === 'error' ? '#f5c6cb' : '#c3e6cb';
-  toast.style.display = 'flex';
-
-  setTimeout(() => {
-    toast.style.display = 'none';
-  }, 3000);
-}
-
-function hideToast() {
-  document.getElementById('toast').style.display = 'none';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.add-to-cart').forEach(button => {
-    button.addEventListener('click', async () => {
-      const eventId = button.dataset.eventId;
-
-      try {
-        const response = await fetch(`/ajouter_au_panier/${eventId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        const result = await response.json();
-
-        if (response.status === 401 || result.message.includes("connecté")) {
-          showToast("Vous devez être connecté pour ajouter au panier.", 'error');
-        } else if (response.ok) {
-          showToast("Billet ajouté au panier !", 'success');
-        } else {
-          showToast("Une erreur est survenue.", 'error');
-        }
-      } catch (error) {
-        showToast("Erreur de communication avec le serveur.", 'error');
-        console.error(error);
-      }
-    });
-  });
-});
-</script>
-
+<!-- Script JS séparé -->
 <script src="{{ url_for('static', filename='panier.js') }}"></script>
+<script src="{{ url_for('static', filename='index.js') }}"></script>
+
 </body>
 </html>
