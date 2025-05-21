@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch(error => {
         console.error(error);
-        showAlert("Une erreur s'est produite lors de l'ajout au panier.", 'error');
+        showAlert("Vous devez être connecté pour ajouter un article.", 'error');
       });
     });
   });
